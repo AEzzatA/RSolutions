@@ -1,0 +1,127 @@
+---
+title: 'Programming Assignment 3: Hospital Quality: best function'
+author: "Ahmed Ezzat Afifi"
+date: "Thursday, October 23, 2014"
+output: html_document
+---
+Now as always, we first need to discover the story the data is telling. reading The both PDFs provided by the quiz is very important in understanding the problem we want to solve.
+
+first lets read the data and view it
+
+
+```{r}
+#Remember colClasses? just adding one means we want R to read everything as a character
+
+outcome <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+#You may want to use View(outcome). this won't work here on this document
+
+#Now instead of loading the data everytime we want to access it like we did last time, we will be using a much smarter way
+attach(outcome)
+#This will attach the data variable to our current workspace
+```
+
+now following the PDF instructions. making a histogram for the 30-day mortality rates for heart attack
+
+```{r}
+outcome[ ,11] <- as.numeric(outcome[ ,11]) #Change column number 11 to numeric type and then added back to the outcome data variable 
+
+#The NA's warning is expected since there are NA's values, and R is telling us to take care of them
+
+hist(outcome[, 11])
+```
+
+Now read the function requirement carefully in the instructions PDF
+
+we want to know the relevant heart failure columns in data
+```{r}
+names(outcome) #Get col names
+```
+So the relevant columns to our function are are 11, 17 and 23
+
+one small trick we will be using in our algorithm. consider this code
+```{r}
+bands <- c("Megadeth", "Slayer", "Metalica")
+myFavoriteBand <- "Slayer"
+bands[bands == myFavoriteBand]
+#you see the Slayer in the output is not the value in myFavoriteBand variavle
+#it come from bands vector
+
+```
+
+
+
+
+####Developing algorithm idea
+
+This algorithm will stay with us for the whole assignment with few modifications
+
+
+1-load the data in our function
+
+2- we have 3 possible "outcomes" possibilities for 3 columns in data. lets save those outcomes names in a vector we will call outcomevalues
+
+3- decide which column we should use according to the relevent outcome passed in function header
+
+4- subset the data according to the state in context in a new variable. and discard irreverent data
+
+5- convert the relevant column to in our subset-ted data to numeric
+
+6- remove Na's to only story clean data
+
+7- sort our clean data according to hospital name and pick the one with the minimum number !
+
+so this goes like this
+
+```{r}
+best <- function(state, outcome) {
+  
+  #Loading data as they descriped in the PDF
+  data <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+  
+  #Saving the expected values of outcome argument
+  outcomevalues = c("heart attack", "heart failure", "pneumonia")
+  
+  #Now a trick to select which column we need
+  #We already know the indexs in the data
+  #So the next line will return the number of the vector that matches the position
+  #of our outcomevalues
+  #So if it outcome in function header was equal to "pneumonia"
+  #The next line will return 23 "POSITION number 3 in vector"" 
+  
+  column <- c(11, 17, 23)[outcomevalues == outcome]
+  
+  #Now we want only to save the relevent data to the passed state
+  
+  data <- data[data$State == state, ]
+  
+  #Now we want to convert the data to numeric
+  #But something to take care of
+  #In our exploration R throes warining when we convert to numeric
+  #But the sumbmit function doesn't like R sending warnings
+  #So, we will tell R to STFU about them :D 
+  #That's by executing what we want inside a function called suppressWarnings()
+  #We just write anything we want inside it, and it will make sure R will not say anything
+  
+  #See 
+  suppressWarnings(data[[column]] <- as.numeric(data[[column]]))
+  
+  #Now we need to remove the missing data
+  #Notice the !. it means keep everything that is not NA
+  data <- data[!is.na(data[[column]]), ]
+  
+  #now we want to sort our data, here the function order() comes to help
+  #Read ?order
+  #using it we can sort data by name too. we can do that with sort() function
+  #The best is the first row
+  data <- data[order(data[column], data$Hospital.Name), ]
+  
+  #And that's it
+  #We should return the first name of a hospital in our ordered data
+  
+  data$Hospital.Name[1]
+  
+}
+```
+
+Now save that function in a R script called best.R and submit it
+

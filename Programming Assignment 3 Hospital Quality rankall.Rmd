@@ -1,0 +1,132 @@
+---
+title: 'Programming Assignment 3: Hospital Quality rankall'
+author: "Ahmed Ezzat Afifi"
+date: "Thursday, October 23, 2014"
+output: html_document
+---
+
+Read the function specification very carefully!
+
+you get the idea we are not going to do something very new by now. except we will be ranking over all states not an exact one
+
+and as rankhospital we should take care of invalid arguments
+
+again, we are not going to-reinvent the wheel. this is the beauty of designing a good algorithm before starting to code :)
+
+a clever trick we will be doing here
+
+in R and python you can do things like this
+
+```{r}
+#Printing the first 10 states
+#In some languages like Java or C# or PHP this is called foreach 
+for(i in state.abb[1:10]){ #This is a bulit in vector in R that has the states abbreviates
+  print(i)
+}
+
+```
+
+As opposed to this for loop. here we 
+
+```{r}
+#Here i is only a number and we are getting the data from state.abb by index
+for(i in 1:10){
+  print(state.abb[i])
+}
+
+```
+
+what if we want to use the both methods at the same time? sometimes "like in rankall"
+we want both the for iterator to have both the value and the position
+we can simply define a number by 1 outside the for loop, then increment it at the end of the loop
+```{r}
+z <- 1
+for(state in state.abb){
+  print(state); print(z)
+  z <- z + 1;
+  #Now we can use data with both data[data$State == state]
+  #And something like data[z, ]
+}
+
+```
+
+
+
+Anyway, So our function goes like this
+
+
+
+```{r}
+rankall <- function(outcome, num = "best") {
+  #Read data as usual
+  data <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+  
+  #Save or potential outcomes
+  outcomevalues = c("heart attack", "heart failure", "pneumonia")
+
+  
+  if (!is.element(outcome, outcomevalues)) {
+    stop("invalid outcome")
+  }
+  
+  column <- c(11, 17, 23)[outcomevalues == outcome]
+  
+  suppressWarnings(data[[column]] <- as.numeric(data[[column]]))
+  
+  data <- data[!is.na(data[[column]]),]
+  
+  
+  hospitals <- c() #Initialize an emptey vector to save hospitals in
+  states <- c() #Same but for states
+  
+  #Since we will not loop with an iterator
+  #We will loop with the value of state.abb
+  #So the state variable will be the state abbreviation
+  #This will make it easy to subset the data by state
+  #But we will need too an iterator
+  #To append our hospitals
+  #And states vectors
+  #So we will define a counter
+  #Just like we do with while loops if you are familiar with them
+  #And then increment it at the end of every loop iteration
+  #So now we can use both the easy way to subset data and the easy way to append our vectors
+  
+  i <- 0
+  for (state in state.abb) {
+
+    #Subset the data to only keep for the value of 'state' in the for loop
+    #The easy way to subset data by state
+    stateData <- data[data$State == state, ]
+    
+    # Sort by minimum column, and hospital name -- best one on top
+    stateData <- stateData[order(stateData[column], stateData$Hospital.Name), ]
+    
+    # Check what to return
+    if (num == "best") {
+      #Return the top of the ordered data
+      value <- stateData$Hospital.Name[1]
+    }
+    else if (num == "worst") {
+      #return the last element of the ordered data
+      value <- stateData$Hospital.Name[nrow(stateData)]
+    }    
+    else if (num <= nrow(stateData)) {
+      #Return the number of row by index
+      value <- stateData$Hospital.Name[num]
+    }
+    else {
+      value <- NA
+    }
+    
+    #Append our hospitals data 
+    hospitals[i] <- value
+    states[i] <- state
+    i <- i+1 #Here we increment the i so we can keep track of it
+  }
+  
+  df <- data.frame(hospital=hospitals, state=states)
+  df
+}
+
+```
+
